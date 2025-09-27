@@ -1,10 +1,10 @@
 package com.proj.ecommintelligent.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 @Entity
 @Getter
@@ -21,5 +21,11 @@ public class Product {
     private double price;
     private int quantity;
     private String category;
+    @OneToMany(mappedBy = "product")
+    @JsonIgnore
+    private List<OrderItem> orderItems;
+    @OneToMany(mappedBy = "product")
+    @JsonIgnore
+    private List<CartItem> cartItems;
 
 }
