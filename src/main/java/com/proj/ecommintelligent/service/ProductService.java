@@ -11,4 +11,5 @@ public interface ProductService {
     Product save(Product product);
     void deleteById(Long id);
     Optional<Product> update(Product product);
+    String generateDescription(Long productId);
 }

@@ -28,7 +28,7 @@ public class EcommIntelligentApplication {
                     Product.builder()
                             .name("Laptop")
                             .description("HP Core i5")
-                            .image("laptop.jpg")
+                            .image("https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.biougnach.ma%2Fshop%2Fcategory%2F74%2F3&psig=AOvVaw2rj6JUvkvtiCHQp8uLmxYN&ust=1759096514881000&source=images&cd=vfe&opi=89978449&ved=2ahUKEwizkLeo9_mPAxVknCcCHZ04E7UQjRx6BAgAEBo")
                             .price(899.99)
                             .quantity(10)
                             .category("PC")

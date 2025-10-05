@@ -1,22 +1,30 @@
 package com.proj.ecommintelligent.web;
 
+import com.proj.ecommintelligent.AI.ProductDescriptionService;
 import com.proj.ecommintelligent.entities.Product;
 import com.proj.ecommintelligent.service.ProductService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @RestController
 @RequestMapping("api/products")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductDescriptionService productDescriptionService;
 
-    public ProductController(ProductService productService) {
+
+    public ProductController(ProductService productService, ProductDescriptionService productDescriptionService) {
         this.productService = productService;
+        this.productDescriptionService = productDescriptionService;
     }
 
     @GetMapping
@@ -59,4 +67,5 @@ public class ProductController {
 
         return productService.save(existing);
     }
+
 }
