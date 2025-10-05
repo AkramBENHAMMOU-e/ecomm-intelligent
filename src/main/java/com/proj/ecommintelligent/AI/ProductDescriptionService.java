@@ -23,18 +23,12 @@ public class ProductDescriptionService {
 
     public String generateDescription(String productName, String productCategory, double productPrice, String additionalAttributes) {
         String prompt = String.format("""
-                Génère une description de produit résumée et attrayante pour un site e-commerce.
-                Voici les informations du produit :
-                Nom : %s
-                Catégorie : %s
-                Prix : %.2f€
-                Attributs supplémentaires : %s
+                Génère une description de produit en UNE SEULE PHRASE de 15 à 25 mots maximum pour un site e-commerce.
+                Produit : %s (%s) - %.2f€
+                Détails : %s
 
-                La description doit être d'environ 50-100 mots, mettre en avant les avantages et caractéristiques uniques,
-                et inciter à l'achat. Écris en français. 
-                
-                La description doit être en texte brut (plain text) sans aucun formatage HTML, Markdown ou autre.
-                Ne commence pas par "Description :" ou un titre similaire.
+                Met en avant les avantages principaux. Écris en français. 
+                Texte brut sans formatage.
                 """, productName, productCategory, productPrice, additionalAttributes);
 
         System.out.println("Génération de description pour: " + productName);
@@ -71,8 +65,8 @@ public class ProductDescriptionService {
                     if (!parts.isEmpty()) {
                         String generatedDescription = (String) parts.get(0).get("text");
                         System.out.println("Description générée avec succès pour: " + productName);
-                        // Clean the description to ensure it's plain text
-                        return cleanDescription(generatedDescription);
+                        // Clean the description to ensure it's plain text and a single sentence
+                        return ensureSingleSentence(cleanDescription(generatedDescription));
                     }
                 }
             }
@@ -108,5 +102,38 @@ public class ProductDescriptionService {
         return cleaned;
     }
     
-  
+    /**
+     * Ensure the description is a single sentence
+     */
+    private String ensureSingleSentence(String description) {
+        // Split by sentence-ending punctuation and take only the first sentence
+        String[] sentences = description.split("[.!?]+");
+        if (sentences.length > 0) {
+            // Ensure the sentence ends with a period
+            String sentence = sentences[0].trim();
+            if (!sentence.endsWith(".")) {
+                sentence += ".";
+            }
+            return sentence;
+        }
+        return description.trim();
+    }
+    
+    /**
+     * Method to list available models - for debugging purposes
+     */
+    public String listAvailableModels() {
+        try {
+            Mono<Map> response = webClient.get()
+                    .uri("https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .timeout(Duration.ofSeconds(30));
+                    
+            Map<String, Object> result = response.block();
+            return result.toString();
+        } catch (Exception e) {
+            return "Erreur lors de la récupération des modèles disponibles : " + e.getMessage();
+        }
+    }
 }

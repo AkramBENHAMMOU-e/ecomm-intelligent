@@ -17,16 +17,20 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
     @OneToOne
     @JoinColumn(name = "customer_id", nullable = true)
     private Customer customer;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<CartItem> items = new ArrayList<>();
 
     public double getTotalPrice() {
-        return items.stream().mapToDouble(CartItem::getSubtotal).sum();
+        double total = 0.0;
+        if (items != null) {
+            for (CartItem item : items) {
+                total += item.getSubtotal();
+            }
+        }
+        return total;
     }
 }
