@@ -46,6 +46,26 @@ public class OrderController {
         return orderService.save(order);
     }
 
+    @PutMapping("/{id}")
+    public Order updateOrder(@PathVariable Long id, @RequestBody Order updatedOrder) {
+        Order existingOrder = orderService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        
+        // Update allowed fields
+        if (updatedOrder.getStatus() != null) {
+            existingOrder.setStatus(updatedOrder.getStatus());
+        }
+        
+        if (updatedOrder.getDate() != null) {
+            existingOrder.setDate(updatedOrder.getDate());
+        }
+        
+        // Note: We're not updating items or customer to avoid complexity
+        // In a real application, you might want more sophisticated logic here
+        
+        return orderService.save(existingOrder);
+    }
+
     @PostMapping("/checkout")
     @ResponseStatus(HttpStatus.CREATED)
     public Order checkout(@RequestParam Long cartId) {
