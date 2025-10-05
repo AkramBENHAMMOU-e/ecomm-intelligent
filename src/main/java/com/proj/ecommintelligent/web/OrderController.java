@@ -51,7 +51,6 @@ public class OrderController {
         Order existingOrder = orderService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
         
-        // Update allowed fields
         if (updatedOrder.getStatus() != null) {
             existingOrder.setStatus(updatedOrder.getStatus());
         }
@@ -60,8 +59,6 @@ public class OrderController {
             existingOrder.setDate(updatedOrder.getDate());
         }
         
-        // Note: We're not updating items or customer to avoid complexity
-        // In a real application, you might want more sophisticated logic here
         
         return orderService.save(existingOrder);
     }
@@ -95,8 +92,6 @@ public class OrderController {
 
         Order saved = orderService.save(order);
 
-        // Important: with orphanRemoval=true on Cart.items, do NOT replace the collection reference.
-        // Clear it in place so Hibernate can track orphan deletions without throwing.
         if (cart.getItems() != null) {
             cart.getItems().clear();
         } else {
