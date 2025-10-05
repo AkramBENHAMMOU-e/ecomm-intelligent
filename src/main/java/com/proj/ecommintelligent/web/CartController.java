@@ -132,6 +132,88 @@ public class CartController {
     }
 
     /**
+     * PUT /api/carts/{cartId}/items/{itemId}
+     * Met à jour la quantité d'un produit dans le panier.
+     * Paramètres: path cartId (Long), itemId (Long)
+     * Corps: { "quantity": int (>0) }
+     * Réponses: 200 OK + Cart mis à jour, 404 si cart/item introuvable, 400 si quantité invalide
+     */
+    @PutMapping("/{cartId}/items/{itemId}")
+    public Cart updateItemQuantity(@PathVariable Long cartId, @PathVariable Long itemId, @RequestBody UpdateQuantityRequest request) {
+        // Get the cart
+        Cart cart = cartService.findById(cartId).orElse(null);
+        if (cart == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found");
+        }
+
+        // Check quantity
+        if (request.quantity <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be greater than 0");
+        }
+
+        // Make sure items list exists
+        if (cart.getItems() == null) {
+            cart.setItems(new ArrayList<>());
+        }
+
+        // Find the item and update its quantity
+        CartItem itemToUpdate = null;
+        for (CartItem item : cart.getItems()) {
+            if (item.getId().equals(itemId)) {
+                itemToUpdate = item;
+                break;
+            }
+        }
+        
+        // If item found, update its quantity
+        if (itemToUpdate != null) {
+            itemToUpdate.setQuantity(request.quantity);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found in cart");
+        }
+
+        return cartService.save(cart);
+    }
+
+    /**
+     * DELETE /api/carts/{cartId}/items/{itemId}
+     * Supprime un produit du panier.
+     * Paramètres: path cartId (Long), itemId (Long)
+     * Réponses: 200 OK + Cart mis à jour, 404 si cart/item introuvable
+     */
+    @DeleteMapping("/{cartId}/items/{itemId}")
+    public Cart removeItemFromCart(@PathVariable Long cartId, @PathVariable Long itemId) {
+        // Get the cart
+        Cart cart = cartService.findById(cartId).orElse(null);
+        if (cart == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found");
+        }
+
+        // Make sure items list exists
+        if (cart.getItems() == null) {
+            cart.setItems(new ArrayList<>());
+        }
+
+        // Find and remove the item
+        CartItem itemToRemove = null;
+        for (CartItem item : cart.getItems()) {
+            if (item.getId().equals(itemId)) {
+                itemToRemove = item;
+                break;
+            }
+        }
+        
+        // If item found, remove it
+        if (itemToRemove != null) {
+            cart.getItems().remove(itemToRemove);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found in cart");
+        }
+
+        return cartService.save(cart);
+    }
+
+    /**
      * DELETE /api/carts/{id}
      * Supprime un panier par son identifiant.
      * Paramètres: path id (Long)
@@ -163,6 +245,23 @@ public class CartController {
         // Constructor with parameters
         public AddItemRequest(Long productId, int quantity) {
             this.productId = productId;
+            this.quantity = quantity;
+        }
+    }
+    
+    /**
+     * Requête de mise à jour de quantité.
+     * Champs:
+     * - quantity: nouvelle quantité (>0)
+     */
+    public static class UpdateQuantityRequest {
+        public int quantity;
+        
+        // Default constructor
+        public UpdateQuantityRequest() {}
+        
+        // Constructor with parameters
+        public UpdateQuantityRequest(int quantity) {
             this.quantity = quantity;
         }
     }
