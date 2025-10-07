@@ -6,6 +6,7 @@ import com.proj.ecommintelligent.entities.Product;
 import com.proj.ecommintelligent.service.CartService;
 import com.proj.ecommintelligent.service.ProductService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,6 +37,7 @@ public class CartController {
      * Réponse: 200 OK + JSON array de Cart
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public List<Cart> getAllCarts(){
         return cartService.findAll();
     }
@@ -47,6 +49,7 @@ public class CartController {
      * Réponses: 200 OK + Cart, 404 si non trouvé
      */
     @GetMapping("/{id}")
+    @PreAuthorize("permitAll()")
     public Cart getCartById(@PathVariable Long id){
         // Try to find the cart
         Cart cart = cartService.findById(id).orElse(null);
@@ -68,6 +71,7 @@ public class CartController {
      * Réponse: 201 Created + Cart créé
      */
     @PostMapping
+    @PreAuthorize("permitAll()")
     @ResponseStatus(HttpStatus.CREATED)
     public Cart addCart(@RequestBody Cart cart){
         return cartService.save(cart);
@@ -81,6 +85,7 @@ public class CartController {
      * Réponses: 201 Created + Cart mis à jour, 404 si cart/product introuvable, 400 si quantité invalide
      */
     @PostMapping("/{cartId}/items")
+    @PreAuthorize("permitAll()")
     @ResponseStatus(HttpStatus.CREATED)
     public Cart addItemToCart(@PathVariable Long cartId, @RequestBody AddItemRequest request) {
         // Get the cart or create it if it doesn't exist
@@ -139,6 +144,7 @@ public class CartController {
      * Réponses: 200 OK + Cart mis à jour, 404 si cart/item introuvable, 400 si quantité invalide
      */
     @PutMapping("/{cartId}/items/{itemId}")
+    @PreAuthorize("permitAll()")
     public Cart updateItemQuantity(@PathVariable Long cartId, @PathVariable Long itemId, @RequestBody UpdateQuantityRequest request) {
         // Get the cart
         Cart cart = cartService.findById(cartId).orElse(null);
@@ -182,6 +188,7 @@ public class CartController {
      * Réponses: 200 OK + Cart mis à jour, 404 si cart/item introuvable
      */
     @DeleteMapping("/{cartId}/items/{itemId}")
+    @PreAuthorize("permitAll()")
     public Cart removeItemFromCart(@PathVariable Long cartId, @PathVariable Long itemId) {
         // Get the cart
         Cart cart = cartService.findById(cartId).orElse(null);
@@ -220,6 +227,7 @@ public class CartController {
      * Réponses: 204 No Content si supprimé, 404 si non trouvé
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCart(@PathVariable Long id){
         // Check if cart exists

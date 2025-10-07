@@ -8,6 +8,7 @@ import com.proj.ecommintelligent.enums.StatusOrder;
 import com.proj.ecommintelligent.service.CartService;
 import com.proj.ecommintelligent.service.OrderService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -30,27 +31,32 @@ public class OrderController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public List<Order> getAllOrders(){
         return orderService.findAll();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Order getOrderById(@PathVariable Long id){
         return orderService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public Order addOrder(@RequestBody Order order){
         return orderService.save(order);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Order updateOrder(@PathVariable Long id, @RequestBody Order updatedOrder) {
         Order existingOrder = orderService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
         
+        // Update allowed fields
         if (updatedOrder.getStatus() != null) {
             existingOrder.setStatus(updatedOrder.getStatus());
         }
@@ -59,11 +65,14 @@ public class OrderController {
             existingOrder.setDate(updatedOrder.getDate());
         }
         
+        // Note: We're not updating items or customer to avoid complexity
+        // In a real application, you might want more sophisticated logic here
         
         return orderService.save(existingOrder);
     }
 
     @PostMapping("/checkout")
+    @PreAuthorize("permitAll()")
     @ResponseStatus(HttpStatus.CREATED)
     public Order checkout(@RequestParam Long cartId) {
         Cart cart = cartService.findById(cartId)
@@ -92,6 +101,8 @@ public class OrderController {
 
         Order saved = orderService.save(order);
 
+        // Important: with orphanRemoval=true on Cart.items, do NOT replace the collection reference.
+        // Clear it in place so Hibernate can track orphan deletions without throwing.
         if (cart.getItems() != null) {
             cart.getItems().clear();
         } else {
@@ -103,6 +114,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrder(@PathVariable Long id){
         if (orderService.findById(id).isEmpty()) {

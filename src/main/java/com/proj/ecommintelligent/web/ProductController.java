@@ -4,13 +4,12 @@ import com.proj.ecommintelligent.AI.ProductDescriptionService;
 import com.proj.ecommintelligent.entities.Product;
 import com.proj.ecommintelligent.service.ProductService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
+
 
 
 @RestController
@@ -40,12 +39,14 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Product addProduct(@RequestBody Product product){
         return productService.save(product);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('ADMIN')")
     public void deleteProduct(@PathVariable Long id){
         if (productService.findById(id).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
@@ -54,6 +55,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Product updateProduct(@RequestBody Product updatedProduct, @PathVariable Long id){
         Product existing = productService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
