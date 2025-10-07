@@ -74,7 +74,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 //autoriser les endpoints publics
                 .authorizeHttpRequests(ar->ar
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/**","/api/recommendations/**").permitAll()
                         .requestMatchers("/auth/login/**", "/api/carts/**", "/api/orders/checkout", "/h2-console/**").permitAll()
                         .anyRequest().authenticated())
                 //permettre l'utilisation de la console H2
