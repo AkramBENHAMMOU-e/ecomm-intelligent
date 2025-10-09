@@ -2,10 +2,12 @@ package com.proj.ecommintelligent.web;
 
 import com.proj.ecommintelligent.entities.Cart;
 import com.proj.ecommintelligent.entities.CartItem;
+import com.proj.ecommintelligent.entities.Customer;
 import com.proj.ecommintelligent.entities.Order;
 import com.proj.ecommintelligent.entities.OrderItem;
 import com.proj.ecommintelligent.enums.StatusOrder;
 import com.proj.ecommintelligent.service.CartService;
+import com.proj.ecommintelligent.service.CustomerService;
 import com.proj.ecommintelligent.service.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,10 +26,12 @@ public class OrderController {
 
     private final OrderService orderService;
     private final CartService cartService;
+    private final CustomerService customerService;
 
-    public OrderController(OrderService orderService, CartService cartService) {
+    public OrderController(OrderService orderService, CartService cartService, CustomerService customerService) {
         this.orderService = orderService;
         this.cartService = cartService;
+        this.customerService = customerService;
     }
 
     @GetMapping
@@ -56,7 +60,6 @@ public class OrderController {
         Order existingOrder = orderService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
         
-        // Update allowed fields
         if (updatedOrder.getStatus() != null) {
             existingOrder.setStatus(updatedOrder.getStatus());
         }
@@ -64,29 +67,35 @@ public class OrderController {
         if (updatedOrder.getDate() != null) {
             existingOrder.setDate(updatedOrder.getDate());
         }
-        
-        // Note: We're not updating items or customer to avoid complexity
-        // In a real application, you might want more sophisticated logic here
-        
+               
         return orderService.save(existingOrder);
     }
 
     @PostMapping("/checkout")
     @PreAuthorize("permitAll()")
     @ResponseStatus(HttpStatus.CREATED)
-    public Order checkout(@RequestParam Long cartId) {
-        Cart cart = cartService.findById(cartId)
+    public Order checkout(@RequestBody CheckoutRequest checkoutRequest) {
+        Cart cart = cartService.findById(checkoutRequest.getCartId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found"));
 
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart is empty");
         }
 
+        Customer customer = customerService.createOrFindCustomer(
+                checkoutRequest.getFirstName(),
+                checkoutRequest.getLastName(),
+                checkoutRequest.getEmail(),
+                checkoutRequest.getPhone(),
+                checkoutRequest.getAddress()
+        );
+
         Order order = Order.builder()
                 .date(LocalDate.now())
                 .status(StatusOrder.Processing)
-                .customer(cart.getCustomer())
+                .customer(customer)
                 .items(new ArrayList<>())
+                .phoneNumber(checkoutRequest.getPhone())
                 .build();
 
         for (CartItem ci : cart.getItems()) {
@@ -100,9 +109,6 @@ public class OrderController {
         }
 
         Order saved = orderService.save(order);
-
-        // Important: with orphanRemoval=true on Cart.items, do NOT replace the collection reference.
-        // Clear it in place so Hibernate can track orphan deletions without throwing.
         if (cart.getItems() != null) {
             cart.getItems().clear();
         } else {
@@ -111,6 +117,19 @@ public class OrderController {
         cartService.save(cart);
 
         return saved;
+    }
+
+    @GetMapping("/customers/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public Customer getCustomerById(@PathVariable Long id) {
+        return customerService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
+    }
+
+    @GetMapping("/customers")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public List<Customer> getAllCustomers() {
+        return customerService.findAll();
     }
 
     @DeleteMapping("/{id}")

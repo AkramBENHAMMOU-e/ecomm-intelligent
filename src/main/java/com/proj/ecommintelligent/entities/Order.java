@@ -28,6 +28,7 @@ public class Order {
     private Customer customer;
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> items;
+    private String phoneNumber;
 
     public double getTotalAmount() {
         return items.stream().mapToDouble(i -> i.getPrice() * i.getQuantity()).sum();
