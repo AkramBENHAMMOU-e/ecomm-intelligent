@@ -9,10 +9,13 @@ import com.proj.ecommintelligent.enums.StatusOrder;
 import com.proj.ecommintelligent.service.CartService;
 import com.proj.ecommintelligent.service.CustomerService;
 import com.proj.ecommintelligent.service.OrderService;
+import com.proj.ecommintelligent.service.WebhookService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -27,11 +30,14 @@ public class OrderController {
     private final OrderService orderService;
     private final CartService cartService;
     private final CustomerService customerService;
+    @Autowired
+    private WebhookService webhookService;
 
     public OrderController(OrderService orderService, CartService cartService, CustomerService customerService) {
         this.orderService = orderService;
         this.cartService = cartService;
         this.customerService = customerService;
+
     }
 
     @GetMapping
@@ -82,6 +88,11 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart is empty");
         }
 
+        // Validation de l'email pour l'envoi de confirmation
+        if (checkoutRequest.getEmail() == null || checkoutRequest.getEmail().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required for order confirmation");
+        }
+
         Customer customer = customerService.createOrFindCustomer(
                 checkoutRequest.getFirstName(),
                 checkoutRequest.getLastName(),
@@ -115,6 +126,7 @@ public class OrderController {
             cart.setItems(new ArrayList<>());
         }
         cartService.save(cart);
+        webhookService.triggerOrderConfirmation(saved);
 
         return saved;
     }
